@@ -1,0 +1,164 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.17.7"
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "e3210dc73b29f83ae66b866caa494b09",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "2bebfe70f5cf7031c9866aefbff52714",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "e1a0df0085fc3d99d75042951b642650",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "6bbaea7d7cf21772c1e3454c0bab8fd7",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "bb968e54031f855caab4bd757262e473",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "517bf12dde8bf6c07b5b31b20f86d923",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "12607443a91da3a102f538e3964e9015",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "a519ddaa8f9fda72638996c59a40f296",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "0fc926de42e717daed3f29598ae50ef4",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "5e018331605f2b151f509c9052b115da",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "faf03ed74b4c8a1e8b49b7dbb4af671b",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "77618a3fcffb847e5eeea00f3c9450c3",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><hr />\n<h3 id=\"navigation\">Navigation</h3>\n<span class=\"paragraph\"><a href=\"index.py\">\u2190 Back to Index</a> | <a href=\"campaign_analytics_dashboard.py?account_id=None\">\ud83d\udd04 Refresh Data</a></span>\n<h3 id=\"about-this-dashboard\">About This Dashboard</h3>\n<span class=\"paragraph\">This dashboard displays deep dive campaign performance analysis with conversion tracking for account <strong>None</strong>. \nUse the filters above to customize the view and explore different time periods.</span>\n<span class=\"paragraph\"><strong>Data Source:</strong> <code>campaign_analytics_data</code> table</span></span>"
+          }
+        }
+      ],
+      "console": []
+    }
+  ]
+}

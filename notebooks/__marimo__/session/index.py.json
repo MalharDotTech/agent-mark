@@ -1,0 +1,151 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.18.1"
+  },
+  "cells": [
+    {
+      "id": "MJUe",
+      "code_hash": "77717b337afba95b11ba49e78281f80a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"meta-ads-analytics-dashboard\">\ud83d\udcca Meta Ads Analytics Dashboard</h1>\n<span class=\"paragraph\">Welcome to your centralized analytics platform. Select an account below to access your dashboards.</span>\n<span class=\"paragraph\"><strong>Status:</strong> Loading accounts and dashboards...</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Hbol",
+      "code_hash": "d5b089bcd28eedfa674f058cd034957a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "e8b8613c753605ea1d345e059a3b2815",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "a776bc71e385ce5ff64a129db0317eda",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"select-account\">Select Account</h2></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "c8e8b5de99dbf16d46fe9f30f0519882",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "3f5a3696c361c2dfcf1ef700e921b8c1",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>5 accounts available</strong></span></span><marimo-ui-element object-id='lEQa-0' random-id='87132406-0ad3-3cf7-053a-a4d92b82021e'><marimo-dropdown data-initial-value='[&quot;Mock Ad Account&quot;]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Choose an account to view dashboards&lt;/span&gt;&lt;/span&gt;&quot;' data-options='[&quot;Mock Ad Account&quot;,&quot;NATHABIT Main&quot;,&quot;Porter - BM - new&quot;,&quot;Porter - old&quot;,&quot;Porter Partnerships&quot;]' data-allow-select-none='false' data-searchable='false' data-full-width='false'></marimo-dropdown></marimo-ui-element></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "dd77b777f2faa9a68f7b5511300e8bb6",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "faae14ea4b51d2c49d97f264295e25ce",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"available-dashboards\">Available Dashboards</h2></span>\n    <a href=\"/ad_performance_dashboard.py/?account_id=act_272178626\" style=\"text-decoration: none; color: inherit;\">\n        <div style=\"\n            border: 1px solid #e0e0e0;\n            border-radius: 8px;\n            padding: 24px;\n            margin: 12px 0;\n            background: white;\n            transition: box-shadow 0.2s;\n            cursor: pointer;\n            box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n        \" onmouseover=\"this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)'\" \n           onmouseout=\"this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'\">\n            <h3 style=\"margin: 0 0 8px 0; color: #333;\">\ud83d\udcc8 Ad Performance Dashboard</h3>\n            <p style=\"color: #666; margin: 0; line-height: 1.4;\">\n                Campaign performance metrics, spend analysis, and key performance indicators\n            </p>\n            \n        <div style=\"display: flex; gap: 20px; font-size: 14px; color: #999; margin-top: 12px;\">\n            <span>\ud83d\udcca Records: 2,406</span> <span>\ud83d\udcca Last Updated: 2025-11-29 10:55:31</span> <span>\ud83d\udcca Status: \u2705 Data Available</span>\n        </div>\n        \n        </div>\n    </a>\n    \n    <a href=\"/audience_insights_dashboard.py/?account_id=act_272178626\" style=\"text-decoration: none; color: inherit;\">\n        <div style=\"\n            border: 1px solid #e0e0e0;\n            border-radius: 8px;\n            padding: 24px;\n            margin: 12px 0;\n            background: white;\n            transition: box-shadow 0.2s;\n            cursor: pointer;\n            box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n        \" onmouseover=\"this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)'\" \n           onmouseout=\"this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'\">\n            <h3 style=\"margin: 0 0 8px 0; color: #333;\">\ud83d\udc65 Audience Insights Dashboard</h3>\n            <p style=\"color: #666; margin: 0; line-height: 1.4;\">\n                Demographic and behavioral analysis of your target audiences (No data available for this account)\n            </p>\n            \n        <div style=\"display: flex; gap: 20px; font-size: 14px; color: #999; margin-top: 12px;\">\n            <span>\ud83d\udcca Records: 0</span> <span>\ud83d\udcca Last Updated: Never</span> <span>\ud83d\udcca Status: \ud83d\udced No Data</span>\n        </div>\n        \n        </div>\n    </a>\n    \n    <a href=\"/campaign_analytics_dashboard.py/?account_id=act_272178626\" style=\"text-decoration: none; color: inherit;\">\n        <div style=\"\n            border: 1px solid #e0e0e0;\n            border-radius: 8px;\n            padding: 24px;\n            margin: 12px 0;\n            background: white;\n            transition: box-shadow 0.2s;\n            cursor: pointer;\n            box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n        \" onmouseover=\"this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)'\" \n           onmouseout=\"this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'\">\n            <h3 style=\"margin: 0 0 8px 0; color: #333;\">\ud83d\udcca Campaign Analytics Dashboard</h3>\n            <p style=\"color: #666; margin: 0; line-height: 1.4;\">\n                Deep dive campaign analysis with conversion tracking and ROAS metrics (No data available for this account)\n            </p>\n            \n        <div style=\"display: flex; gap: 20px; font-size: 14px; color: #999; margin-top: 12px;\">\n            <span>\ud83d\udcca Records: 0</span> <span>\ud83d\udcca Last Updated: Never</span> <span>\ud83d\udcca Status: \ud83d\udced No Data</span>\n        </div>\n        \n        </div>\n    </a>\n    <span class=\"markdown prose dark:prose-invert contents\"><hr />\n<span class=\"paragraph\"><strong>Dashboard Summary:</strong> 3/3 dashboards available \u2022 2 with data across all accounts</span></span></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "f3d38af7fee9e5206380cb5db39f7110",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "a81989539f4da2a00fd6e54c11e9580e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><h3 id=\"account-information\">Account Information</h3>\n<span class=\"paragraph\"><strong>Account Name:</strong> Mock Ad Account<br />\n<strong>Account ID:</strong> act_272178626<br />\n<strong>Last Updated:</strong> 2025-11-29 10:55:31</span></span><span class=\"markdown prose dark:prose-invert contents\"><h3 id=\"dashboard-management\">Dashboard Management</h3></span><div style='display: flex;flex: 1;flex-direction: row;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><marimo-ui-element object-id='BYtC-0' random-id='1cb99d2c-4a19-efe5-ae11-5ea54864ebfe'><marimo-button data-initial-value='0' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;\ud83d\udd04 Refresh Dashboards&lt;/span&gt;&lt;/span&gt;&quot;' data-kind='&quot;neutral&quot;' data-disabled='false' data-full-width='false'></marimo-button></marimo-ui-element><marimo-ui-element object-id='BYtC-1' random-id='0696ad19-6b29-7ba4-db78-6ac2e114b6ee'><marimo-button data-initial-value='0' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;\ud83d\ude80 Generate Missing Dashboards&lt;/span&gt;&lt;/span&gt;&quot;' data-kind='&quot;neutral&quot;' data-disabled='false' data-full-width='false'></marimo-button></marimo-ui-element></div></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "865f00d9bd5ecc1fa19f0dce42b76071",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><hr />\n<h3 id=\"system-status\">System Status</h3>\n<span class=\"paragraph\"><strong>Dashboards:</strong> 3/3 available<br />\n<strong>Accounts:</strong> 5 configured<br />\n<strong>Database:</strong> \u2705 Connected</span>\n<h3 id=\"getting-started\">Getting Started</h3>\n<ol>\n<li><strong>Select an account</strong> from the dropdown above</li>\n<li><strong>Click on a dashboard card</strong> to view detailed analytics  </li>\n<li><strong>Use the browser back button</strong> to return to this index page</li>\n</ol>\n<h3 id=\"troubleshooting\">Troubleshooting</h3>\n<span class=\"paragraph\"><strong>No dashboards showing?</strong></span>\n<ul>\n<li>Ensure data extraction has been run for your accounts</li>\n<li>Check that job types are registered in the database</li>\n<li>Run the dashboard generation script: <code>uv run python scripts/generate_dashboards.py</code></li>\n</ul>\n<span class=\"paragraph\"><strong>Missing data?</strong></span>\n<ul>\n<li>Verify that the FastAPI service has extracted data for your account</li>\n<li>Check the database tables contain records for your account ID</li>\n<li>Ensure the account ID matches exactly between extraction and dashboard</li>\n</ul>\n<span class=\"paragraph\"><strong>Dashboard errors?</strong></span>\n<ul>\n<li>Check that all required dependencies are installed</li>\n<li>Verify database schema matches expected structure</li>\n<li>Contact your administrator if problems persist</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": []
+    }
+  ]
+}

@@ -1,0 +1,164 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.18.1"
+  },
+  "cells": [
+    {
+      "id": "RGSE",
+      "code_hash": "ac4ddd91e39ec6bdbabeaa8341e6475d",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "internal",
+          "evalue": "An internal error occurred: a799a90b-137f-4548-abbf-8884ca3bc9ae",
+          "traceback": []
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Hbol",
+      "code_hash": "e3210dc73b29f83ae66b866caa494b09",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "3bef530676749c0a621d8189ce1c699e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "fc585a5bc25a980436f84deef7842570",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "776e3a3a9d294c06b235a93614fde083",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "6c8ea48c5904240e6f7cfe099a08387e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "517bf12dde8bf6c07b5b31b20f86d923",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "b776401702651e310f5821b70c2a9d1b",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "9e1d106857fa49c089737fe83c29ceeb",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "49a215089ccd123ac969de074c6466ba",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "faf03ed74b4c8a1e8b49b7dbb4af671b",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "fabb0a8df815fdab619ae6485a27fa2a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><hr />\n<h3 id=\"navigation\">Navigation</h3>\n<span class=\"paragraph\"><a href=\"/index.py\">\u2190 Back to Index</a> | <a href=\"/audience_insights_dashboard.py/?account_id=act_272178626\">\ud83d\udd04 Refresh Data</a></span>\n<h3 id=\"about-this-dashboard\">About This Dashboard</h3>\n<span class=\"paragraph\">This dashboard displays demographic and behavioral analysis of target audiences for account <strong>act_272178626</strong>. \nUse the filters above to customize the view and explore different time periods.</span>\n<span class=\"paragraph\"><strong>Data Source:</strong> <code>audience_insights_data</code> table</span></span>"
+          }
+        }
+      ],
+      "console": []
+    }
+  ]
+}

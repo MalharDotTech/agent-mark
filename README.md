@@ -49,6 +49,12 @@ graph TB
 - Dynamic job type discovery
 - Extensible for new data sources and visualizations
 
+## 🎥 Demo
+
+[![Watch the Demo](https://img.youtube.com/vi/sK13eKQrKIY/0.jpg)](https://youtu.be/sK13eKQrKIY)
+
+*Click the image above to watch a walkthrough of the current application state.*
+
 ## 🚀 Quick Start
 
 ### Prerequisites

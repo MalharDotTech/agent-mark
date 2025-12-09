@@ -94,6 +94,71 @@ class DatabaseManager:
                 )
             """)
             
+            # Create rnf_cumulative_data table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS rnf_cumulative_data (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    account_id TEXT NOT NULL,
+                    date_start DATE NOT NULL,
+                    date_stop DATE NOT NULL,
+                    analysis_level TEXT NOT NULL,
+                    entity_id TEXT,
+                    entity_name TEXT,
+                    reach INTEGER,
+                    frequency DECIMAL(5,2),
+                    impressions INTEGER,
+                    spend DECIMAL(10,2),
+                    clicks INTEGER,
+                    cpm DECIMAL(10,2),
+                    cpp DECIMAL(10,2),
+                    ctr DECIMAL(5,2),
+                    extracted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (account_id) REFERENCES accounts(account_id)
+                )
+            """)
+            
+            # Create rnf_overlap_data table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS rnf_overlap_data (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    account_id TEXT NOT NULL,
+                    date_start DATE NOT NULL,
+                    date_stop DATE NOT NULL,
+                    analysis_level TEXT NOT NULL,
+                    entity1_id TEXT NOT NULL,
+                    entity1_name TEXT,
+                    entity2_id TEXT NOT NULL,
+                    entity2_name TEXT,
+                    reach1 INTEGER,
+                    reach2 INTEGER,
+                    combined_reach INTEGER,
+                    overlap_count INTEGER,
+                    overlap_percentage DECIMAL(5,2),
+                    extracted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (account_id) REFERENCES accounts(account_id)
+                )
+            """)
+            
+            # Create audience_insights_data table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS audience_insights_data (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    account_id TEXT NOT NULL,
+                    date_start DATE NOT NULL,
+                    date_stop DATE NOT NULL,
+                    campaign_id TEXT,
+                    campaign_name TEXT,
+                    breakdown_type TEXT NOT NULL,
+                    breakdown_value TEXT NOT NULL,
+                    reach INTEGER,
+                    impressions INTEGER,
+                    spend DECIMAL(10,2),
+                    clicks INTEGER,
+                    extracted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (account_id) REFERENCES accounts(account_id)
+                )
+            """)
+            
             # Create indexes for better query performance
             cursor.execute("""
                 CREATE INDEX IF NOT EXISTS idx_ad_performance_account_date 
@@ -103,6 +168,38 @@ class DatabaseManager:
             cursor.execute("""
                 CREATE INDEX IF NOT EXISTS idx_ad_performance_campaign 
                 ON ad_performance_data(campaign_id)
+            """)
+            
+            # Indexes for RNF tables
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_rnf_cumulative_account_date 
+                ON rnf_cumulative_data(account_id, date_start)
+            """)
+            
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_rnf_cumulative_level 
+                ON rnf_cumulative_data(account_id, analysis_level)
+            """)
+            
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_rnf_overlap_account_date 
+                ON rnf_overlap_data(account_id, date_start)
+            """)
+            
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_rnf_overlap_level 
+                ON rnf_overlap_data(account_id, analysis_level)
+            """)
+            
+            # Indexes for audience insights table
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_audience_insights_account_date 
+                ON audience_insights_data(account_id, date_start)
+            """)
+            
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_audience_insights_breakdown 
+                ON audience_insights_data(account_id, breakdown_type)
             """)
             
             conn.commit()
@@ -285,6 +382,219 @@ class DatabaseManager:
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, self.insert_bulk_ad_performance_data, data_list)
     
+    # RNF Cumulative Data Methods
+    
+    def insert_rnf_cumulative_data(self, data: Dict[str, Any]):
+        """Insert RNF cumulative data record."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO rnf_cumulative_data (
+                    account_id, date_start, date_stop, analysis_level, entity_id, entity_name,
+                    reach, frequency, impressions, spend, clicks, cpm, cpp, ctr
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                data.get('account_id'),
+                data.get('date_start'),
+                data.get('date_stop'),
+                data.get('analysis_level'),
+                data.get('entity_id'),
+                data.get('entity_name'),
+                data.get('reach'),
+                data.get('frequency'),
+                data.get('impressions'),
+                data.get('spend'),
+                data.get('clicks'),
+                data.get('cpm'),
+                data.get('cpp'),
+                data.get('ctr')
+            ))
+            conn.commit()
+    
+    async def insert_rnf_cumulative_data_async(self, data: Dict[str, Any]):
+        """Insert RNF cumulative data record asynchronously."""
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self.insert_rnf_cumulative_data, data)
+    
+    def insert_bulk_rnf_cumulative_data(self, data_list: List[Dict[str, Any]]):
+        """Insert multiple RNF cumulative data records efficiently."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            records = []
+            for data in data_list:
+                records.append((
+                    data.get('account_id'),
+                    data.get('date_start'),
+                    data.get('date_stop'),
+                    data.get('analysis_level'),
+                    data.get('entity_id'),
+                    data.get('entity_name'),
+                    data.get('reach'),
+                    data.get('frequency'),
+                    data.get('impressions'),
+                    data.get('spend'),
+                    data.get('clicks'),
+                    data.get('cpm'),
+                    data.get('cpp'),
+                    data.get('ctr')
+                ))
+            
+            cursor.executemany("""
+                INSERT INTO rnf_cumulative_data (
+                    account_id, date_start, date_stop, analysis_level, entity_id, entity_name,
+                    reach, frequency, impressions, spend, clicks, cpm, cpp, ctr
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, records)
+            
+            conn.commit()
+            logger.info(f"Inserted {len(records)} RNF cumulative records")
+    
+    async def insert_bulk_rnf_cumulative_data_async(self, data_list: List[Dict[str, Any]]):
+        """Insert multiple RNF cumulative data records efficiently asynchronously."""
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self.insert_bulk_rnf_cumulative_data, data_list)
+    
+    # RNF Overlap Data Methods
+    
+    def insert_rnf_overlap_data(self, data: Dict[str, Any]):
+        """Insert RNF overlap data record."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO rnf_overlap_data (
+                    account_id, date_start, date_stop, analysis_level,
+                    entity1_id, entity1_name, entity2_id, entity2_name,
+                    reach1, reach2, combined_reach, overlap_count, overlap_percentage
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                data.get('account_id'),
+                data.get('date_start'),
+                data.get('date_stop'),
+                data.get('analysis_level'),
+                data.get('entity1_id'),
+                data.get('entity1_name'),
+                data.get('entity2_id'),
+                data.get('entity2_name'),
+                data.get('reach1'),
+                data.get('reach2'),
+                data.get('combined_reach'),
+                data.get('overlap_count'),
+                data.get('overlap_percentage')
+            ))
+            conn.commit()
+    
+    async def insert_rnf_overlap_data_async(self, data: Dict[str, Any]):
+        """Insert RNF overlap data record asynchronously."""
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self.insert_rnf_overlap_data, data)
+    
+    def insert_bulk_rnf_overlap_data(self, data_list: List[Dict[str, Any]]):
+        """Insert multiple RNF overlap data records efficiently."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            records = []
+            for data in data_list:
+                records.append((
+                    data.get('account_id'),
+                    data.get('date_start'),
+                    data.get('date_stop'),
+                    data.get('analysis_level'),
+                    data.get('entity1_id'),
+                    data.get('entity1_name'),
+                    data.get('entity2_id'),
+                    data.get('entity2_name'),
+                    data.get('reach1'),
+                    data.get('reach2'),
+                    data.get('combined_reach'),
+                    data.get('overlap_count'),
+                    data.get('overlap_percentage')
+                ))
+            
+            cursor.executemany("""
+                INSERT INTO rnf_overlap_data (
+                    account_id, date_start, date_stop, analysis_level,
+                    entity1_id, entity1_name, entity2_id, entity2_name,
+                    reach1, reach2, combined_reach, overlap_count, overlap_percentage
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, records)
+            
+            conn.commit()
+            logger.info(f"Inserted {len(records)} RNF overlap records")
+    
+    async def insert_bulk_rnf_overlap_data_async(self, data_list: List[Dict[str, Any]]):
+        """Insert multiple RNF overlap data records efficiently asynchronously."""
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self.insert_bulk_rnf_overlap_data, data_list)
+    
+    # Audience Insights Data Methods
+    
+    def insert_audience_insights_data(self, data: Dict[str, Any]):
+        """Insert audience insights data record."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO audience_insights_data (
+                    account_id, date_start, date_stop, campaign_id, campaign_name,
+                    breakdown_type, breakdown_value, reach, impressions, spend, clicks
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                data.get('account_id'),
+                data.get('date_start'),
+                data.get('date_stop'),
+                data.get('campaign_id'),
+                data.get('campaign_name'),
+                data.get('breakdown_type'),
+                data.get('breakdown_value'),
+                data.get('reach'),
+                data.get('impressions'),
+                data.get('spend'),
+                data.get('clicks')
+            ))
+            conn.commit()
+    
+    async def insert_audience_insights_data_async(self, data: Dict[str, Any]):
+        """Insert audience insights data record asynchronously."""
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self.insert_audience_insights_data, data)
+    
+    def insert_bulk_audience_insights_data(self, data_list: List[Dict[str, Any]]):
+        """Insert multiple audience insights data records efficiently."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            records = []
+            for data in data_list:
+                records.append((
+                    data.get('account_id'),
+                    data.get('date_start'),
+                    data.get('date_stop'),
+                    data.get('campaign_id'),
+                    data.get('campaign_name'),
+                    data.get('breakdown_type'),
+                    data.get('breakdown_value'),
+                    data.get('reach'),
+                    data.get('impressions'),
+                    data.get('spend'),
+                    data.get('clicks')
+                ))
+            
+            cursor.executemany("""
+                INSERT INTO audience_insights_data (
+                    account_id, date_start, date_stop, campaign_id, campaign_name,
+                    breakdown_type, breakdown_value, reach, impressions, spend, clicks
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, records)
+            
+            conn.commit()
+            logger.info(f"Inserted {len(records)} audience insights records")
+    
+    async def insert_bulk_audience_insights_data_async(self, data_list: List[Dict[str, Any]]):
+        """Insert multiple audience insights data records efficiently asynchronously."""
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self.insert_bulk_audience_insights_data, data_list)
+    
     def initialize_default_job_types(self):
         """Initialize default data job types."""
         with self.get_connection() as conn:
@@ -300,6 +610,45 @@ class DatabaseManager:
                 'Ad Performance Insights',
                 'Campaign, ad set, and ad level performance metrics including impressions, clicks, spend, and conversion data',
                 'ad_performance_data',
+                True
+            ))
+            
+            # Insert RNF cumulative job type
+            cursor.execute("""
+                INSERT OR IGNORE INTO data_job_types 
+                (job_type_id, job_name, description, table_name, is_active)
+                VALUES (?, ?, ?, ?, ?)
+            """, (
+                'rnf_cumulative',
+                'Reach & Frequency Analysis',
+                'Cumulative reach and frequency trends over time for campaigns and ad sets',
+                'rnf_cumulative_data',
+                True
+            ))
+            
+            # Insert RNF overlap job type
+            cursor.execute("""
+                INSERT OR IGNORE INTO data_job_types 
+                (job_type_id, job_name, description, table_name, is_active)
+                VALUES (?, ?, ?, ?, ?)
+            """, (
+                'rnf_overlap',
+                'Audience Overlap Analysis',
+                'Campaign and ad set audience overlap detection to identify redundant targeting',
+                'rnf_overlap_data',
+                True
+            ))
+            
+            # Insert audience insights job type
+            cursor.execute("""
+                INSERT OR IGNORE INTO data_job_types 
+                (job_type_id, job_name, description, table_name, is_active)
+                VALUES (?, ?, ?, ?, ?)
+            """, (
+                'audience_insights',
+                'Audience Insights',
+                'Demographic, geographic, and device-based audience analysis',
+                'audience_insights_data',
                 True
             ))
             

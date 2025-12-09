@@ -17,7 +17,9 @@ from .core.exceptions import (
 )
 from .core.metrics import metrics_collector
 
-from .models.requests import ExtractionRequest
+from .models.requests import (
+    ExtractionRequest, RNFCumulativeRequest, RNFOverlapRequest, AudienceRequest
+)
 from .models.responses import (
     AccountInfo, HealthResponse, ErrorResponse, DataJobType, DataResponse
 )
@@ -55,6 +57,8 @@ token_manager = None
 rate_limiter = None
 meta_client = None
 data_extraction_service = None
+rnf_extraction_service = None
+audience_extraction_service = None
 
 # Track startup time for metrics
 startup_time = time.time()
@@ -262,6 +266,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 async def startup_event():
     """Application startup event."""
     global token_manager, rate_limiter, meta_client, data_extraction_service
+    global rnf_extraction_service, audience_extraction_service
     
     logger.info("Starting Meta Ads API Service")
     logger.info(f"Meta API Version: {settings.meta_api_version}")
@@ -277,8 +282,15 @@ async def startup_event():
     rate_limiter = RateLimiter(token_manager)
     meta_client = MetaAPIClient(token_manager, rate_limiter)
     
-    # Initialize data extraction service with SQLite storage
+    # Initialize data extraction services
     data_extraction_service = DataExtractionService(meta_client, db_manager)
+    
+    # Initialize RNF and Audience extraction services
+    from .services.rnf_extraction_service import RNFExtractionService
+    from .services.audience_extraction_service import AudienceExtractionService
+    
+    rnf_extraction_service = RNFExtractionService(meta_client, db_manager)
+    audience_extraction_service = AudienceExtractionService(meta_client, db_manager)
     
     # Log number of tokens (without exposing them)
     token_count = len(settings.get_access_tokens()) if settings.meta_access_tokens else 0
@@ -657,4 +669,312 @@ async def get_recent_api_calls(limit: int = 50):
         raise HTTPException(
             status_code=500,
             detail=f"Failed to retrieve recent API calls: {str(e)}"
+        )
+
+
+# RNF Endpoints
+
+@app.post("/api/v1/extract-rnf-cumulative")
+async def extract_rnf_cumulative(request: RNFCumulativeRequest):
+    """
+    Extract cumulative reach & frequency data.
+    
+    Args:
+        request: RNF cumulative extraction parameters
+    
+    Returns:
+        Extraction results with statistics
+    
+    Requirements: RNF cumulative extraction
+    """
+    try:
+        job_id = str(uuid.uuid4())
+        
+        logger.info(f"Starting RNF cumulative extraction job {job_id}")
+        logger.info(f"Accounts: {request.account_ids}, Level: {request.level}")
+        
+        results = []
+        
+        for account_id in request.account_ids:
+            result = await rnf_extraction_service.extract_cumulative_rnf(
+                account_id=account_id,
+                start_date=request.start_date,
+                end_date=request.end_date,
+                level=request.level,
+                time_increment=request.time_increment,
+                entity_ids=request.entity_ids
+            )
+            results.append(result)
+        
+        total_records = sum(r['records_processed'] for r in results)
+        
+        logger.info(f"RNF cumulative extraction job {job_id} completed: {total_records} records")
+        
+        return {
+            "job_id": job_id,
+            "total_records": total_records,
+            "accounts_processed": len(request.account_ids),
+            "results": results,
+            "extraction_time": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"RNF cumulative extraction failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"RNF cumulative extraction failed: {str(e)}"
+        )
+
+
+@app.post("/api/v1/extract-rnf-overlap")
+async def extract_rnf_overlap(request: RNFOverlapRequest):
+    """
+    Compute audience overlap (expensive - N² API calls).
+    
+    Args:
+        request: RNF overlap extraction parameters
+    
+    Returns:
+        Overlap analysis results
+    
+    Requirements: RNF overlap analysis
+    """
+    try:
+        job_id = str(uuid.uuid4())
+        
+        logger.info(f"Starting RNF overlap analysis job {job_id}")
+        logger.info(f"Account: {request.account_id}, Level: {request.level}")
+        logger.info(f"Entities: {len(request.entity_ids)} (will compute {len(request.entity_ids) * (len(request.entity_ids) - 1) // 2} pairs)")
+        
+        result = await rnf_extraction_service.extract_audience_overlap(
+            account_id=request.account_id,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            level=request.level,
+            entity_ids=request.entity_ids,
+            refresh_existing=request.refresh_existing
+        )
+        
+        logger.info(f"RNF overlap analysis job {job_id} completed")
+        
+        return {
+            "job_id": job_id,
+            **result
+        }
+        
+    except ValueError as e:
+        logger.warning(f"Invalid RNF overlap request: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"RNF overlap analysis failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"RNF overlap analysis failed: {str(e)}"
+        )
+
+
+@app.get("/api/v1/rnf-overlap/{account_id}")
+async def get_stored_overlap(
+    account_id: str,
+    level: Optional[str] = None,
+    date_start: Optional[str] = None,
+    date_stop: Optional[str] = None
+):
+    """
+    Get stored overlap results.
+    
+    Args:
+        account_id: Meta ad account ID
+        level: Optional analysis level filter
+        date_start: Optional start date filter
+        date_stop: Optional end date filter
+    
+    Returns:
+        Stored overlap data
+    
+    Requirements: RNF overlap data retrieval
+    """
+    try:
+        overlap_data = await rnf_extraction_service.get_stored_overlap(
+            account_id=account_id,
+            level=level,
+            date_start=date_start,
+            date_stop=date_stop
+        )
+        
+        logger.info(f"Retrieved {len(overlap_data)} overlap records for account {account_id}")
+        
+        return {
+            "account_id": account_id,
+            "total_records": len(overlap_data),
+            "data": overlap_data,
+            "filters_applied": {
+                "level": level,
+                "date_start": date_start,
+                "date_stop": date_stop
+            },
+            "retrieved_at": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get overlap data for {account_id}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve overlap data: {str(e)}"
+        )
+
+
+# Audience Insights Endpoints
+
+@app.post("/api/v1/extract-audience")
+async def extract_audience_insights(request: AudienceRequest):
+    """
+    Extract audience insights with breakdowns.
+    
+    Args:
+        request: Audience insights extraction parameters
+    
+    Returns:
+        Extraction results with statistics
+    
+    Requirements: Audience insights extraction
+    """
+    try:
+        job_id = str(uuid.uuid4())
+        
+        logger.info(f"Starting audience insights extraction job {job_id}")
+        logger.info(f"Accounts: {request.account_ids}, Breakdowns: {request.breakdown_types}")
+        
+        results = []
+        
+        for account_id in request.account_ids:
+            result = await audience_extraction_service.extract_audience_insights(
+                account_id=account_id,
+                start_date=request.start_date,
+                end_date=request.end_date,
+                breakdown_types=request.breakdown_types,
+                level=request.level,
+                entity_ids=request.entity_ids
+            )
+            results.append(result)
+        
+        total_records = sum(r['total_records'] for r in results)
+        
+        logger.info(f"Audience insights extraction job {job_id} completed: {total_records} records")
+        
+        return {
+            "job_id": job_id,
+            "total_records": total_records,
+            "accounts_processed": len(request.account_ids),
+            "results": results,
+            "extraction_time": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Audience insights extraction failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Audience insights extraction failed: {str(e)}"
+        )
+
+
+@app.get("/api/v1/audience/{account_id}")
+async def get_audience_data(
+    account_id: str,
+    breakdown_type: Optional[str] = None,
+    breakdown_value: Optional[str] = None,
+    date_start: Optional[str] = None,
+    date_stop: Optional[str] = None
+):
+    """
+    Get stored audience insights.
+    
+    Args:
+        account_id: Meta ad account ID
+        breakdown_type: Optional breakdown type filter
+        breakdown_value: Optional breakdown value filter
+        date_start: Optional start date filter
+        date_stop: Optional end date filter
+    
+    Returns:
+        Stored audience insights data
+    
+    Requirements: Audience insights data retrieval
+    """
+    try:
+        audience_data = await audience_extraction_service.get_stored_audience_insights(
+            account_id=account_id,
+            breakdown_type=breakdown_type,
+            breakdown_value=breakdown_value,
+            date_start=date_start,
+            date_stop=date_stop
+        )
+        
+        logger.info(f"Retrieved {len(audience_data)} audience insights records for account {account_id}")
+        
+        return {
+            "account_id": account_id,
+            "total_records": len(audience_data),
+            "data": audience_data,
+            "filters_applied": {
+                "breakdown_type": breakdown_type,
+                "breakdown_value": breakdown_value,
+                "date_start": date_start,
+                "date_stop": date_stop
+            },
+            "retrieved_at": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get audience data for {account_id}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve audience data: {str(e)}"
+        )
+
+
+@app.get("/api/v1/audience/{account_id}/summary")
+async def get_audience_summary(
+    account_id: str,
+    breakdown_type: str,
+    date_start: Optional[str] = None,
+    date_stop: Optional[str] = None
+):
+    """
+    Get audience insights summary with aggregated statistics.
+    
+    Args:
+        account_id: Meta ad account ID
+        breakdown_type: Breakdown type (age, gender, country, etc.)
+        date_start: Optional start date filter
+        date_stop: Optional end date filter
+    
+    Returns:
+        Aggregated audience insights summary
+    
+    Requirements: Audience insights summary
+    """
+    try:
+        summary = await audience_extraction_service.get_breakdown_summary(
+            account_id=account_id,
+            breakdown_type=breakdown_type,
+            date_start=date_start,
+            date_stop=date_stop
+        )
+        
+        logger.info(f"Retrieved audience summary for account {account_id}, breakdown: {breakdown_type}")
+        
+        return {
+            **summary,
+            "retrieved_at": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get audience summary for {account_id}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve audience summary: {str(e)}"
         )

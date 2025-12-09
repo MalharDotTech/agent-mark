@@ -680,6 +680,336 @@ class MetaAPIClient:
         
         logger.info(f"Retrieved {total_records} insights records for account {account_id}")
     
+    # ========== RNF (REACH & FREQUENCY) METHODS ==========
+    
+    async def get_cumulative_reach_frequency(
+        self,
+        account_id: str,
+        level: str = 'account',
+        time_range: Optional[Dict[str, str]] = None,
+        time_increment: str = '1',
+        entity_ids: Optional[List[str]] = None,
+        fields: Optional[List[str]] = None
+    ) -> AsyncIterator[Dict[str, Any]]:
+        """
+        Get cumulative reach and frequency data with pagination.
+        
+        Args:
+            account_id: Meta ad account ID
+            level: Analysis level (account, campaign, adset, ad)
+            time_range: Time range dict with 'since' and 'until' keys
+            time_increment: '1' for daily, '7' for weekly, 'monthly' for monthly
+            entity_ids: Optional list of campaign/adset/ad IDs to filter
+            fields: Optional list of fields to retrieve
+            
+        Yields:
+            Individual reach & frequency records
+        """
+        if not account_id.startswith('act_'):
+            account_id = f'act_{account_id}'
+        
+        logger.info(f"Fetching cumulative R&F for account {account_id}, level: {level}")
+        
+        # Default fields for R&F
+        if fields is None:
+            fields = [
+                'reach', 'frequency', 'impressions', 'spend', 'clicks',
+                'cpm', 'cpp', 'ctr', 'date_start', 'date_stop'
+            ]
+        
+        params = {
+            'level': level,
+            'fields': ','.join(fields),
+            'time_increment': time_increment,
+            'limit': 1000
+        }
+        
+        # Add time range if provided
+        if time_range:
+            params['time_range'] = time_range
+        
+        # Add filtering if specific entities selected
+        if entity_ids and level != 'account':
+            params['filtering'] = json.dumps([{
+                'field': f'{level}.id',
+                'operator': 'IN',
+                'value': entity_ids
+            }])
+        
+        # Use pagination to get all results
+        url = f'{account_id}/insights'
+        total_records = 0
+        
+        async for item in self.paginate_results(url, params):
+            total_records += 1
+            yield item
+        
+        logger.info(f"Retrieved {total_records} R&F records for account {account_id}")
+    
+    async def calculate_audience_overlap_pair(
+        self,
+        account_id: str,
+        level: str,
+        entity1_id: str,
+        entity2_id: str,
+        time_range: Dict[str, str]
+    ) -> Dict[str, Any]:
+        """
+        Calculate audience overlap for a single pair using 3-API-call pattern.
+        
+        Pattern:
+        1. Get reach for entity1
+        2. Get reach for entity2
+        3. Get combined reach for [entity1, entity2]
+        4. Calculate overlap = reach1 + reach2 - combined_reach
+        
+        Args:
+            account_id: Meta ad account ID
+            level: Analysis level (campaign or adset)
+            entity1_id: First entity ID
+            entity2_id: Second entity ID
+            time_range: Time range dict with 'since' and 'until' keys
+            
+        Returns:
+            Dictionary with overlap data
+        """
+        if not account_id.startswith('act_'):
+            account_id = f'act_{account_id}'
+        
+        logger.info(f"Calculating overlap for {entity1_id} vs {entity2_id}")
+        
+        # Call 1: Reach for entity1
+        params1 = {
+            'level': level,
+            'fields': 'reach',
+            'time_range': time_range,
+            'filtering': json.dumps([{
+                'field': f'{level}.id',
+                'operator': 'IN',
+                'value': [entity1_id]
+            }])
+        }
+        
+        response1 = await self._make_request_with_token_and_rate_limiting(
+            method='GET',
+            endpoint=f'{account_id}/insights',
+            params=params1
+        )
+        
+        reach1 = int(response1['data'][0].get('reach', 0)) if response1.get('data') else 0
+        
+        # Call 2: Reach for entity2
+        params2 = {
+            'level': level,
+            'fields': 'reach',
+            'time_range': time_range,
+            'filtering': json.dumps([{
+                'field': f'{level}.id',
+                'operator': 'IN',
+                'value': [entity2_id]
+            }])
+        }
+        
+        response2 = await self._make_request_with_token_and_rate_limiting(
+            method='GET',
+            endpoint=f'{account_id}/insights',
+            params=params2
+        )
+        
+        reach2 = int(response2['data'][0].get('reach', 0)) if response2.get('data') else 0
+        
+        # Call 3: Combined reach for both entities
+        params_combined = {
+            'level': 'account',  # Account level to get combined reach
+            'fields': 'reach',
+            'time_range': time_range,
+            'filtering': json.dumps([{
+                'field': f'{level}.id',
+                'operator': 'IN',
+                'value': [entity1_id, entity2_id]
+            }])
+        }
+        
+        response_combined = await self._make_request_with_token_and_rate_limiting(
+            method='GET',
+            endpoint=f'{account_id}/insights',
+            params=params_combined
+        )
+        
+        combined_reach = int(response_combined['data'][0].get('reach', 0)) if response_combined.get('data') else 0
+        
+        # Calculate overlap
+        overlap_count = max(0, reach1 + reach2 - combined_reach)
+        overlap_percentage = (overlap_count / min(reach1, reach2) * 100) if min(reach1, reach2) > 0 else 0
+        
+        logger.info(f"Overlap calculated: {overlap_count} ({overlap_percentage:.1f}%)")
+        
+        return {
+            'entity1_id': entity1_id,
+            'entity2_id': entity2_id,
+            'reach1': reach1,
+            'reach2': reach2,
+            'combined_reach': combined_reach,
+            'overlap_count': overlap_count,
+            'overlap_percentage': overlap_percentage
+        }
+    
+    # ========== AUDIENCE INSIGHTS METHODS ==========
+    
+    async def get_insights_with_demographics(
+        self,
+        account_id: str,
+        breakdowns: List[str],
+        time_range: Optional[Dict[str, str]] = None,
+        level: str = 'campaign',
+        entity_ids: Optional[List[str]] = None,
+        fields: Optional[List[str]] = None,
+        limit: int = 1000
+    ) -> AsyncIterator[Dict[str, Any]]:
+        """
+        Get insights with demographic/geographic breakdowns.
+        
+        Args:
+            account_id: Meta ad account ID
+            breakdowns: List of breakdowns (e.g., ['age', 'gender'] or ['country'])
+            time_range: Time range dict with 'since' and 'until' keys
+            level: Analysis level (campaign, adset, ad)
+            entity_ids: Optional list of campaign/adset/ad IDs to filter
+            fields: Optional list of fields to retrieve
+            limit: Number of results per page
+            
+        Yields:
+            Individual insights records with breakdown data
+        """
+        if not account_id.startswith('act_'):
+            account_id = f'act_{account_id}'
+        
+        logger.info(f"Fetching audience insights for account {account_id}, breakdowns: {breakdowns}")
+        
+        # Default fields for audience insights
+        if fields is None:
+            fields = [
+                'reach', 'impressions', 'spend', 'clicks',
+                'cpm', 'ctr', 'date_start', 'date_stop'
+            ]
+            
+            # Add campaign info if not account level
+            if level != 'account':
+                fields.extend(['campaign_id', 'campaign_name'])
+        
+        params = {
+            'level': level,
+            'fields': ','.join(fields),
+            'breakdowns': ','.join(breakdowns),
+            'limit': limit
+        }
+        
+        # Add time range if provided
+        if time_range:
+            params['time_range'] = time_range
+        
+        # Add filtering if specific entities selected
+        if entity_ids and level != 'account':
+            params['filtering'] = json.dumps([{
+                'field': f'{level}.id',
+                'operator': 'IN',
+                'value': entity_ids
+            }])
+        
+        # Use pagination to get all results
+        url = f'{account_id}/insights'
+        total_records = 0
+        
+        async for item in self.paginate_results(url, params):
+            total_records += 1
+            yield item
+        
+        logger.info(f"Retrieved {total_records} audience insights records for account {account_id}")
+    
+    async def get_campaigns_for_account(
+        self,
+        account_id: str,
+        fields: Optional[List[str]] = None,
+        limit: int = 1000
+    ) -> List[Dict[str, Any]]:
+        """
+        Get campaigns for an account (helper for RNF and audience analysis).
+        
+        Args:
+            account_id: Meta ad account ID
+            fields: Optional list of fields to retrieve
+            limit: Maximum number of campaigns to retrieve
+            
+        Returns:
+            List of campaign data
+        """
+        if not account_id.startswith('act_'):
+            account_id = f'act_{account_id}'
+        
+        logger.info(f"Fetching campaigns for account {account_id}")
+        
+        # Default fields
+        if fields is None:
+            fields = ['id', 'name', 'status', 'objective']
+        
+        params = {
+            'fields': ','.join(fields),
+            'limit': limit
+        }
+        
+        response = await self._make_request_with_token_and_rate_limiting(
+            method='GET',
+            endpoint=f'{account_id}/campaigns',
+            params=params
+        )
+        
+        campaigns = response.get('data', [])
+        logger.info(f"Retrieved {len(campaigns)} campaigns for account {account_id}")
+        
+        return campaigns
+    
+    async def get_adsets_for_account(
+        self,
+        account_id: str,
+        fields: Optional[List[str]] = None,
+        limit: int = 1000
+    ) -> List[Dict[str, Any]]:
+        """
+        Get adsets for an account (helper for RNF analysis).
+        
+        Args:
+            account_id: Meta ad account ID
+            fields: Optional list of fields to retrieve
+            limit: Maximum number of adsets to retrieve
+            
+        Returns:
+            List of adset data
+        """
+        if not account_id.startswith('act_'):
+            account_id = f'act_{account_id}'
+        
+        logger.info(f"Fetching adsets for account {account_id}")
+        
+        # Default fields
+        if fields is None:
+            fields = ['id', 'name', 'status', 'campaign_id']
+        
+        params = {
+            'fields': ','.join(fields),
+            'limit': limit
+        }
+        
+        response = await self._make_request_with_token_and_rate_limiting(
+            method='GET',
+            endpoint=f'{account_id}/adsets',
+            params=params
+        )
+        
+        adsets = response.get('data', [])
+        logger.info(f"Retrieved {len(adsets)} adsets for account {account_id}")
+        
+        return adsets
+    
     # ========== DATE CHUNKING METHODS ==========
     
     @staticmethod

@@ -2,6 +2,8 @@
 
 Modern analytics platform combining **FastAPI** data extraction, **SQLite** storage, and **Marimo** interactive dashboards for Meta advertising insights.
 
+> **Marketing Agency SaaS Tool** - Help agencies demonstrate ROI to clients from Meta (and future Google) ads. Currently in beta development for real-world validation with marketing agencies.
+
 ## 🏗️ Architecture
 
 ```mermaid
@@ -29,6 +31,90 @@ graph TB
     style IDX fill:#f3e5f5
     style FAST fill:#e8f5e8
 ```
+
+## 🎯 Beta v1.0.0 Roadmap Status
+
+### Must Have Features
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Ad Performance Dashboard | ✅ Complete | Working with real data |
+| Campaign Analytics Dashboard | ✅ Complete | Working with real data |
+| **RNF Dashboard** | 🔧 Backend Ready | API extraction complete, dashboard pending |
+| **Audience Analysis Dashboard** | 🔧 Backend Ready | API extraction complete, dashboard pending |
+| Account Navigation | ✅ Complete | Multi-account switching working |
+| Data Pull for Account | ✅ Complete | All 4 tokens validated, extraction tested |
+
+### Good to Have
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Server Deployment Ready | 📝 Pending | Docker + deployment scripts needed |
+| Local Runnable | ✅ Complete | UV-based setup works across systems |
+| Docs & Context | ✅ Complete | Architecture, setup, and API docs ready |
+
+### Delighters
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Onboarding Page | 📝 Pending | UI to add new accounts/tokens |
+| Sub-domain Deployment | 📝 Pending | After deployment scripts |
+
+### Latest Updates (Dec 2025)
+
+**RNF (Reach & Frequency) Extraction - Backend Complete**
+- Cumulative R&F extraction with daily/weekly/monthly breakdowns
+- Audience overlap analysis (3-API-call pattern validated)
+- Database schema: `rnf_cumulative_data`, `rnf_overlap_data` tables
+- API endpoints: `/extract-rnf-cumulative`, `/extract-rnf-overlap`
+- Tested with real Porter account: 3.5M reach, 1.67 frequency
+
+**Audience Insights Extraction - Backend Complete**
+- Demographic breakdowns: age, gender
+- Geographic breakdowns: country, region
+- Device/platform breakdowns
+- Database schema: `audience_insights_data` table
+- API endpoints: `/extract-audience`, `/audience/{account_id}`
+- Tested with real data: 7 age segments, 5.2M peak reach (25-34)
+
+**Token Management Validated**
+- 4 tokens successfully rotating across API calls
+- Rate limiting working as expected
+- Access to 3 Porter accounts confirmed
+
+**Next Immediate Steps:**
+1. Build RNF Marimo dashboard (cumulative trends + overlap heatmap)
+2. Build Audience Insights Marimo dashboard (demographic charts)
+3. Test overlap computation with multiple campaigns
+4. Create deployment scripts (Docker, server setup)
+
+### 🧠 Key Learnings & Design Decisions
+
+**Token Rotation Strategy**
+- Insight: All 4 tokens are functionally identical (not for different purposes)
+- Purpose: Round-robin rotation to avoid Meta API rate limits
+- Implementation: Used across RNF overlap (3 calls per pair) and audience breakdowns
+- Validated: Successfully tested with Porter account (3M+ reach data)
+
+**RNF Overlap Computation**
+- Pattern: 3 API calls per pair: `reach(A) + reach(B) - reach(A+B)`
+- Challenge: 10 campaigns = 45 pairs = 135 API calls (expensive!)
+- Solution: Store results in DB, allow on-demand refresh for recent data
+- Real Result: Found 9% overlap between Mumbai and Bangalore campaigns
+
+**Database Design**
+- Multi-tenant from the start (account_id in all tables)
+- Separate tables for cumulative vs overlap data (different query patterns)
+- Breakdown storage: Single table with type + value columns (flexible)
+- Indexes on account_id + date for dashboard performance
+
+**API Design Philosophy**
+- Test scripts first to understand Meta API responses
+- Build services around validated patterns
+- Pydantic validation for all endpoints
+- Database operations through centralized manager
+
+**Development Approach**
+- Baby steps: Test → Schema → Service → API → Integration
+- Real data validation at each step (Porter account: 3.5M reach, 5.8M impressions)
+- No guesswork - verify API patterns before building services
 
 ## 🎯 Key Features
 
@@ -99,13 +185,34 @@ open http://localhost:2718
 
 ### 4. Extract and Analyze Data
 ```bash
-# Extract data via API
+# Extract ad performance data
 curl -X POST http://localhost:8000/api/v1/extract \
   -H "Content-Type: application/json" \
   -d '{
     "account_ids": ["your_account_id"],
     "start_date": "2024-01-01",
     "end_date": "2024-01-31"
+  }'
+
+# Extract RNF cumulative reach & frequency
+curl -X POST http://localhost:8000/api/v1/extract-rnf-cumulative \
+  -H "Content-Type: application/json" \
+  -d '{
+    "account_ids": ["your_account_id"],
+    "start_date": "2024-01-01",
+    "end_date": "2024-01-31",
+    "level": "account",
+    "time_increment": "1"
+  }'
+
+# Extract audience insights (demographics)
+curl -X POST http://localhost:8000/api/v1/extract-audience \
+  -H "Content-Type: application/json" \
+  -d '{
+    "account_ids": ["your_account_id"],
+    "start_date": "2024-01-01",
+    "end_date": "2024-01-31",
+    "breakdown_types": ["age", "gender"]
   }'
 
 # Data is automatically stored in SQLite and available in dashboards
@@ -122,17 +229,36 @@ curl -X POST http://localhost:8000/api/v1/extract \
 ### 📈 Analytics Dashboards
 - **Ad Performance**: Campaign metrics, spend analysis, KPIs
 - **Campaign Analytics**: Conversion tracking, ROAS analysis
-- **Audience Insights**: Demographic and behavioral data
+- **RNF Analysis** (New): Cumulative reach & frequency trends, audience overlap detection
+- **Audience Insights** (New): Age, gender, geographic, and device breakdowns
 - **Custom Dashboards**: Auto-generated for new data types
 
 ### 🔧 API Endpoints
 
+**Core Data Extraction**
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/v1/extract` | POST | Extract data to SQLite database |
+| `/api/v1/extract` | POST | Extract ad performance data |
+| `/api/v1/extract-rnf-cumulative` | POST | Extract cumulative reach & frequency |
+| `/api/v1/extract-rnf-overlap` | POST | Compute audience overlap (N² API calls) |
+| `/api/v1/extract-audience` | POST | Extract audience insights with breakdowns |
+
+**Data Retrieval**
+| Endpoint | Method | Description |
+|----------|--------|-------------|
 | `/api/v1/accounts` | GET | List Meta ad accounts |
 | `/api/v1/job-types` | GET | Available dashboard types |
+| `/api/v1/data/{job_type}/{account_id}` | GET | Get stored data |
+| `/api/v1/rnf-overlap/{account_id}` | GET | Get stored overlap results |
+| `/api/v1/audience/{account_id}` | GET | Get stored audience insights |
+| `/api/v1/audience/{account_id}/summary` | GET | Aggregated audience summary |
+
+**System**
+| Endpoint | Method | Description |
+|----------|--------|-------------|
 | `/health` | GET | Health check |
+| `/api/v1/metrics` | GET | System metrics |
+| `/docs` | GET | Interactive API documentation |
 
 ## ⚙️ Configuration
 
@@ -158,8 +284,15 @@ BASE_BACKOFF_SECONDS=2
 
 ### Quick System Test
 ```bash
-# Test data extraction and dashboard generation
-uv run python run_test.py
+# Test RNF extraction patterns
+uv run python test_rnf_extraction.py
+
+# Test audience insights extraction
+uv run python test_audience_extraction.py
+
+# Test end-to-end integration
+uv run uvicorn app.main:app --port 8000 &
+uv run python test_integration_rnf.py
 
 # Verify database setup
 sqlite3 data/meta_ads.db ".tables"
@@ -190,19 +323,36 @@ uv run python scripts/generate_dashboards.py
 ```
 meta-ads-analytics/
 ├── app/                    # FastAPI service
-│   ├── core/              # Configuration, database, rate limiting
+│   ├── core/              # Configuration, database, rate limiting, logging, metrics
+│   │   ├── database.py    # SQLite manager with RNF & audience tables
+│   │   ├── token_manager.py  # Token rotation logic
+│   │   └── rate_limiter.py   # Rate limit handling
 │   ├── models/            # Pydantic models
+│   │   ├── requests.py    # RNFCumulativeRequest, RNFOverlapRequest, AudienceRequest
+│   │   └── responses.py   # API response models
 │   ├── services/          # Meta API client, data extraction
-│   └── main.py           # FastAPI application
+│   │   ├── meta_client.py              # Meta Graph API client
+│   │   ├── data_extraction_service.py  # Ad performance extraction
+│   │   ├── rnf_extraction_service.py   # RNF extraction (NEW)
+│   │   └── audience_extraction_service.py  # Audience extraction (NEW)
+│   └── main.py           # FastAPI application with all endpoints
 ├── notebooks/             # Marimo dashboards
 │   ├── index.py          # Main navigation dashboard
-│   ├── *_dashboard.py    # Auto-generated analytics dashboards
+│   ├── ad_performance_dashboard.py      # Ad metrics dashboard
+│   ├── campaign_analytics_dashboard.py  # Campaign analytics
+│   ├── audience_insights_dashboard.py   # Audience demographics
 │   └── utils/            # Shared utilities and templates
+│       ├── dashboard_factory.py    # Dashboard discovery & creation
+│       └── template_generator.py   # Template-based generation
 ├── scripts/               # Setup and maintenance scripts
-│   ├── init_database.py  # Database initialization
+│   ├── init_database.py        # Database initialization
 │   └── generate_dashboards.py  # Dashboard generation
+├── tests/                 # Test scripts
+│   ├── test_rnf_extraction.py     # RNF pattern validation
+│   ├── test_audience_extraction.py # Audience pattern validation
+│   └── test_integration_rnf.py     # End-to-end integration test
 ├── data/
-│   └── meta_ads.db       # SQLite database
+│   └── meta_ads.db       # SQLite database (auto-created)
 └── pyproject.toml        # Dependencies and configuration
 ```
 
@@ -228,8 +378,13 @@ data_job_types (job_type_id, job_name, description, table_name, is_active)
 
 -- Performance data tables
 ad_performance_data (account_id, date_start, campaign_name, impressions, clicks, spend, ...)
-campaign_analytics_data (account_id, date_start, campaign_name, conversions, roas, ...)
-audience_insights_data (account_id, date_start, age_range, gender, location, ...)
+
+-- RNF (Reach & Frequency) tables
+rnf_cumulative_data (account_id, date_start, analysis_level, entity_id, reach, frequency, cpp, ...)
+rnf_overlap_data (account_id, date_start, analysis_level, entity1_id, entity2_id, overlap_count, ...)
+
+-- Audience insights table
+audience_insights_data (account_id, date_start, breakdown_type, breakdown_value, reach, impressions, ...)
 ```
 
 **Data Flow:**
@@ -253,21 +408,29 @@ Meta API → FastAPI Service → SQLite Database → Marimo Dashboards
 
 ## 🚀 Current Status
 
-**✅ Implemented:**
-- Meta API integration with intelligent rate limiting
+**✅ Implemented & Tested:**
+- Meta API integration with intelligent rate limiting (4 tokens validated)
 - SQLite database with multi-tenant architecture
 - Marimo interactive dashboard system
 - Dynamic dashboard generation and discovery
 - Template-based notebook creation
 - Error handling and data validation
 - Account navigation and filtering
+- **RNF (Reach & Frequency) Backend**: Cumulative extraction + overlap analysis
+- **Audience Insights Backend**: Demographic and geographic breakdowns
+- Token rotation across multiple API calls
+- End-to-end extraction tested with real Porter account data
 
-**🔄 Available Extensions:**
-- Additional Meta API endpoints (campaigns, adsets, ads)
-- Custom dashboard templates
-- Advanced visualizations and analytics
-- Scheduled data extraction
+**🔧 In Development:**
+- RNF Marimo dashboard (backend ready, UI pending)
+- Audience Insights Marimo dashboard (backend ready, UI pending)
+- Deployment scripts and Docker configuration
+
+**📝 Planned:**
+- Scheduled/cron-like data extraction jobs
+- Account onboarding UI
 - Export capabilities (CSV, Excel, PDF)
+- Google Ads integration (future)
 
 ## 📚 Documentation
 

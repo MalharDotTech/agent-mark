@@ -19,30 +19,31 @@ def __():
     from plotly.subplots import make_subplots
     from utils.db_connection import db_manager
     from utils.common import (
-        get_url_param, format_currency, format_number, format_percentage,
+        format_currency, format_number, format_percentage,
         create_error_message, create_info_message
     )
     return (
         mo, pd, px, go, make_subplots, db_manager,
-        get_url_param, format_currency, format_number, format_percentage,
+        format_currency, format_number, format_percentage,
         create_error_message, create_info_message
     )
 
 
 @app.cell
-def __(get_url_param, create_error_message):
-    # Get account_id from URL parameters and set up error handling
-    from utils.error_handler import create_dashboard_error_handler
-    
-    account_id = get_url_param("account_id")
-    error_handler = create_dashboard_error_handler("Campaign Analytics", account_id)
+def __(mo, create_error_message):
+    # Get account_id from URL parameters
+    account_id = mo.query_params().get("account_id", None)
     
     if not account_id:
-        account_error = error_handler.handle_missing_account()
+        account_error = create_error_message(
+            "Missing Account ID",
+            "No account ID specified in the URL.",
+            "Please navigate from the index page or add ?account_id=YOUR_ACCOUNT_ID to the URL.",
+        )
     else:
         account_error = None
     
-    return account_id, account_error, error_handler
+    return account_id, account_error
 
 
 @app.cell
@@ -105,12 +106,12 @@ def __(mo, account_id):
 
 
 @app.cell
-def __(account_id, date_range_filter, db_manager, error_handler):
+def __(account_id, date_range_filter, db_manager, pd, create_info_message):
     # Load data with error handling
     if account_id and date_range_filter:
         days = int(date_range_filter.value)
         
-        def load_data():
+        try:
             # Query data from the specific table
             query = """
             SELECT *
@@ -119,20 +120,23 @@ def __(account_id, date_range_filter, db_manager, error_handler):
             AND date_start >= date('now', '-' || :days || ' days')
             ORDER BY date_start DESC
             """
-            return db_manager.query_to_dataframe(query, {"account_id": account_id, "days": days})
-        
-        data = error_handler.safe_execute(load_data, pd.DataFrame(), "Failed to load dashboard data")
-        
-        if isinstance(data, pd.DataFrame) and data.empty:
-            data_message = error_handler.handle_no_data("campaign_analytics", days)
-        else:
-            data_message = None
+            data = db_manager.query_to_dataframe(query, {"account_id": account_id, "days": days})
             
-            # Validate data quality
-            required_columns = ["'id'", "'impressions'", "'clicks'", "'conversions'", "'account_id'"]
-            quality_warning = error_handler.validate_data_quality(data, required_columns)
-            if quality_warning:
-                data_message = quality_warning
+            if isinstance(data, pd.DataFrame) and data.empty:
+                data_message = create_info_message(
+                    "No Data Available",
+                    f"No campaign analytics data found for the last {days} days.",
+                    "Try adjusting the date range or ensure data has been extracted for this account."
+                )
+            else:
+                data_message = None
+        except Exception as e:
+            data = pd.DataFrame()
+            data_message = create_info_message(
+                "Error Loading Data",
+                f"Failed to load dashboard data: {str(e)}",
+                "Please check the logs or contact support."
+            )
     else:
         data = pd.DataFrame()
         data_message = None
@@ -296,7 +300,7 @@ def __(mo, account_id):
     
     ### Navigation
     
-    [← Back to Index](/index.py) | [🔄 Refresh Data](/campaign_analytics_dashboard.py/?account_id={account_id})
+    [← Back to Index](/) | [🔄 Refresh Data](/campaign_analytics_dashboard/?account_id={account_id})
     
     ### About This Dashboard
     

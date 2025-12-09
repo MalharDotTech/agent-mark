@@ -62,6 +62,22 @@ class AudienceExtractionService:
         logger.info(f"Date range: {start_date} to {end_date}")
         logger.info(f"Breakdown types: {breakdown_types}")
         
+        # Ensure account is registered in database
+        try:
+            # Get account info from Meta API
+            account_info = await self.meta_client.get_ad_account(account_id)
+            account_name = account_info.get('name', f'Account {account_id}')
+            
+            # Register account in database
+            await self.db_manager.insert_account_async(
+                account_id=account_id,
+                account_name=account_name,
+                api_token_key="meta_api_token"
+            )
+            logger.info(f"Account registered: {account_name} ({account_id})")
+        except Exception as e:
+            logger.warning(f"Could not register account {account_id}: {e}")
+        
         time_range = {
             'since': start_date,
             'until': end_date

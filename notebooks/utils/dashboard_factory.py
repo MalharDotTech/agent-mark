@@ -71,6 +71,13 @@ class DashboardFactory:
             notebook_filename = f"{job_config.job_type_id}_dashboard.py"
             notebook_path = self.notebooks_dir / notebook_filename
             
+            # Special case: RNF dashboards use a unified rnf_dashboard.py
+            if job_config.job_type_id in ['rnf_cumulative', 'rnf_overlap']:
+                unified_rnf_path = self.notebooks_dir / 'rnf_dashboard.py'
+                notebook_exists = unified_rnf_path.exists()
+            else:
+                notebook_exists = notebook_path.exists()
+            
             # Get data statistics
             data_stats = self._get_data_statistics(job_config)
             
@@ -80,7 +87,7 @@ class DashboardFactory:
                 'description': job_config.description,
                 'table_name': job_config.table_name,
                 'notebook_filename': notebook_filename,
-                'notebook_exists': notebook_path.exists(),
+                'notebook_exists': notebook_exists,
                 'is_active': job_config.is_active,
                 'primary_metrics': job_config.primary_metrics,
                 'chart_types': job_config.chart_types,

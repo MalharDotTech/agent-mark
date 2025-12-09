@@ -179,6 +179,16 @@ def _(
                     'icon': '👥',
                     'title': 'Audience Insights Dashboard',
                     'enhanced_description': 'Demographic and behavioral analysis of your target audiences'
+                },
+                'rnf_cumulative': {
+                    'icon': '📡',
+                    'title': 'Reach & Frequency Dashboard',
+                    'enhanced_description': 'Cumulative reach and frequency trends with audience overlap analysis'
+                },
+                'rnf_overlap': {
+                    'icon': '🔄',
+                    'title': 'Audience Overlap Analysis',
+                    'enhanced_description': 'Identify overlapping audiences between campaigns and ad sets'
                 }
             }
 
@@ -191,7 +201,13 @@ def _(
             if notebook_exists:
                 title = f"{config['icon']} {config['title']}"
                 enhanced_description = config['enhanced_description']
-                link = f"/{job_type}_dashboard.py/?account_id={selected_account_id}"
+                
+                # Handle special case for RnF job types (both use same dashboard)
+                # Important: Include trailing slash to avoid 301 redirect that strips query params
+                if job_type in ['rnf_cumulative', 'rnf_overlap']:
+                    link = f"/rnf_dashboard/?account_id={selected_account_id}"
+                else:
+                    link = f"/{job_type}_dashboard/?account_id={selected_account_id}"
 
                 stats = {
                     "Records": f"{record_count:,}" if job_has_data else "0",

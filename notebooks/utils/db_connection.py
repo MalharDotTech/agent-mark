@@ -191,6 +191,55 @@ class NotebookDatabaseManager:
         """
         return self.query_to_dataframe(query, {"account_id": account_id, "days": days})
     
+    def get_rnf_cumulative_data(self, account_id: str, days: int = 30) -> pd.DataFrame:
+        """Get RNF cumulative data for an account."""
+        query = """
+        SELECT 
+            date_start,
+            date_stop,
+            analysis_level,
+            entity_id,
+            entity_name,
+            reach,
+            frequency,
+            impressions,
+            spend,
+            clicks,
+            cpm,
+            cpp,
+            ctr,
+            extracted_at
+        FROM rnf_cumulative_data
+        WHERE account_id = :account_id
+        AND date_start >= date('now', '-' || :days || ' days')
+        ORDER BY date_start ASC
+        """
+        return self.query_to_dataframe(query, {"account_id": account_id, "days": days})
+    
+    def get_rnf_overlap_data(self, account_id: str, days: int = 30) -> pd.DataFrame:
+        """Get RNF overlap data for an account."""
+        query = """
+        SELECT 
+            date_start,
+            date_stop,
+            analysis_level,
+            entity1_id,
+            entity1_name,
+            entity2_id,
+            entity2_name,
+            reach1,
+            reach2,
+            combined_reach,
+            overlap_count,
+            overlap_percentage,
+            extracted_at
+        FROM rnf_overlap_data
+        WHERE account_id = :account_id
+        AND date_start >= date('now', '-' || :days || ' days')
+        ORDER BY overlap_percentage DESC
+        """
+        return self.query_to_dataframe(query, {"account_id": account_id, "days": days})
+    
     def test_connection(self) -> bool:
         """Test database connection and return True if successful."""
         try:

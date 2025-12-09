@@ -46,10 +46,9 @@ def _():
 
 
 @app.cell
-def _(create_error_message):
+def _(create_error_message, mo):
     # Get account_id from URL parameters
-    # account_id = get_url_param("account_id")
-    account_id = "act_272178626"
+    account_id = mo.query_params().get("account_id", None)
 
     if not account_id:
         account_error = create_error_message(
@@ -577,7 +576,7 @@ def _(account_id, mo):
 
     ### Navigation
 
-    [← Back to Index](/index.py) | [🔄 Refresh Data](/ad_performance_dashboard.py/?account_id={account_id})
+    [← Back to Index](/) | [🔄 Refresh Data](/ad_performance_dashboard/?account_id={account_id})
 
     ### About This Dashboard
 

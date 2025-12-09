@@ -29,6 +29,7 @@ from .services.data_extraction_service import DataExtractionService
 from .core.token_manager import TokenManager
 from .core.rate_limiter import RateLimiter
 from .core.database import db_manager
+from .marimo_server import create_marimo_server
 
 # Initialize logging
 setup_logging()
@@ -978,3 +979,14 @@ async def get_audience_summary(
             status_code=500,
             detail=f"Failed to retrieve audience summary: {str(e)}"
         )
+
+
+# Mount marimo dashboards at root (must be done after all FastAPI routes)
+# FastAPI will check its routes first, then fall through to marimo for unmatched paths
+try:
+    marimo_asgi = create_marimo_server()
+    app.mount("/", marimo_asgi)
+    logger.info("Marimo dashboards mounted at root path")
+except Exception as e:
+    logger.error(f"Failed to mount marimo dashboards: {e}")
+    logger.warning("Continuing without marimo dashboard integration")

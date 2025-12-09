@@ -19,46 +19,49 @@ def __():
     from plotly.subplots import make_subplots
     from utils.db_connection import db_manager
     from utils.common import (
-        get_url_param, format_currency, format_number, format_percentage,
+        format_currency, format_number, format_percentage,
         create_error_message, create_info_message
     )
     return (
         mo, pd, px, go, make_subplots, db_manager,
-        get_url_param, format_currency, format_number, format_percentage,
+        format_currency, format_number, format_percentage,
         create_error_message, create_info_message
     )
 
 
 @app.cell
-def __(get_url_param, create_error_message):
-    # Get account_id from URL parameters and set up error handling
-    from utils.error_handler import create_dashboard_error_handler
-    
-    account_id = get_url_param("account_id")
-    error_handler = create_dashboard_error_handler("Audience Insights", account_id)
+def __(create_error_message, mo):
+    # Get account_id from URL parameters
+    query_params = mo.query_params()
+    account_id = query_params.get("account_id", None)
     
     if not account_id:
-        account_error = error_handler.handle_missing_account()
+        account_error = create_error_message(
+            "Missing Account ID",
+            "No account ID specified in the URL.",
+            "Please navigate from the index page or add ?account_id=YOUR_ACCOUNT_ID to the URL.",
+        )
     else:
         account_error = None
     
-    return account_id, account_error, error_handler
+    return account_id, account_error, query_params
 
 
 @app.cell
 def __(mo, account_id, account_error):
     # Page header
     if account_error:
-        account_error
+        _header_display = account_error
     else:
-        mo.md(f"""
+        _header_display = mo.md(f"""
         # 📊 Audience Insights
         
         **Account:** {account_id}
         
         Demographic and behavioral analysis of target audiences
         """)
-    return
+    
+    _header_display
 
 
 @app.cell
@@ -82,10 +85,9 @@ def __(mo, account_id):
             label="Search Filter"
         )
         
-        # Metric selector for charts
+        # Metric selector for charts (only showing columns that exist in the data)
         metric_options = {
             "Reach": "reach",
-            "Frequency": "frequency",
             "Impressions": "impressions"
         }
         
@@ -96,42 +98,39 @@ def __(mo, account_id):
         )
         
         # Display filters
-        mo.hstack([date_range_filter, search_filter, metric_selector], justify="start")
+        _filters_display = mo.hstack([date_range_filter, search_filter, metric_selector], justify="start")
     else:
         date_range_filter = search_filter = metric_selector = None
+        _filters_display = None
     
+    _filters_display
     return date_range_filter, search_filter, metric_selector
 
 
 @app.cell
-def __(account_id, date_range_filter, db_manager, error_handler):
-    # Load data with error handling
+def __(account_id, create_info_message, date_range_filter, db_manager, pd):
+    # Load data
     if account_id and date_range_filter:
         days = int(date_range_filter.value)
         
-        def load_data():
-            # Query data from the specific table
-            query = """
-            SELECT *
-            FROM audience_insights_data
-            WHERE account_id = :account_id
-            AND date_start >= date('now', '-' || :days || ' days')
-            ORDER BY date_start DESC
-            """
-            return db_manager.query_to_dataframe(query, {"account_id": account_id, "days": days})
+        # Query data from the specific table
+        query = """
+        SELECT *
+        FROM audience_insights_data
+        WHERE account_id = :account_id
+        AND date_start >= date('now', '-' || :days || ' days')
+        ORDER BY date_start DESC
+        """
+        data = db_manager.query_to_dataframe(query, {"account_id": account_id, "days": days})
         
-        data = error_handler.safe_execute(load_data, pd.DataFrame(), "Failed to load dashboard data")
-        
-        if isinstance(data, pd.DataFrame) and data.empty:
-            data_message = error_handler.handle_no_data("audience_insights", days)
+        if data.empty:
+            data_message = create_info_message(
+                "No Data Available",
+                f"No audience insights data found for account {account_id} in the last {days} days. "
+                "Data may not have been extracted yet or the account may not have any activity."
+            )
         else:
             data_message = None
-            
-            # Validate data quality
-            required_columns = ["'id'", "'impressions'", "'reach'", "'account_id'", "'age_range'"]
-            quality_warning = error_handler.validate_data_quality(data, required_columns)
-            if quality_warning:
-                data_message = quality_warning
     else:
         data = pd.DataFrame()
         data_message = None
@@ -143,8 +142,11 @@ def __(account_id, date_range_filter, db_manager, error_handler):
 def __(data_message):
     # Show data message if exists
     if data_message:
-        data_message
-    return
+        _data_message_display = data_message
+    else:
+        _data_message_display = None
+    
+    _data_message_display
 
 
 @app.cell
@@ -240,18 +242,19 @@ def __(filtered_data, metric_selector, px):
 def __(mo, time_chart, filtered_data):
     # Display charts
     if time_chart:
-        return mo.vstack([
+        _charts_display = mo.vstack([
             mo.md("## Data Visualization"),
             time_chart
         ])
     elif not filtered_data.empty:
-        return mo.vstack([
+        _charts_display = mo.vstack([
             mo.md("## Data Overview"),
             mo.md("Time series chart not available - no date column found.")
         ])
-    return
+    else:
+        _charts_display = None
     
-    return
+    _charts_display
 
 
 @app.cell
@@ -270,10 +273,14 @@ def __(mo, filtered_data):
             show_column_summaries=True
         )
         
-        mo.md("## Detailed Data")
-        data_table
+        _table_display = mo.vstack([
+            mo.md("## Detailed Data"),
+            data_table
+        ])
     else:
-        data_table = None
+        _table_display = None
+    
+    _table_display
     
     return data_table,
 
@@ -286,7 +293,7 @@ def __(mo, account_id):
     
     ### Navigation
     
-    [← Back to Index](/index.py) | [🔄 Refresh Data](/audience_insights_dashboard.py/?account_id={account_id})
+    [← Back to Index](/) | [🔄 Refresh Data](/audience_insights_dashboard/?account_id={account_id})
     
     ### About This Dashboard
     

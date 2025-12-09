@@ -84,8 +84,13 @@ def create_dashboard_card(title: str, description: str, link: str, stats: Option
         </div>
         """
     
+    # Use anchor tag with explicit styling for full page navigation
+    # Add onclick as backup and target="_top" to break out of any frames
     return mo.Html(f"""
-    <a href="{link}" style="text-decoration: none; color: inherit;">
+    <a href="{link}" 
+       target="_top"
+       onclick="event.stopPropagation(); window.top.location.href='{link}'; return false;"
+       style="text-decoration: none; color: inherit; display: block;">
         <div style="
             border: 1px solid #e0e0e0;
             border-radius: 8px;

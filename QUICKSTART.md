@@ -26,22 +26,31 @@ uv run uvicorn app.main:app --port 8000
 # Wait for "Application startup complete" then Ctrl+C
 ```
 
-### 4. Start Services
+### 4. Start Unified Server
 
-**Terminal 1 - FastAPI Backend:**
+**Single Command (Recommended):**
 ```bash
 uv run uvicorn app.main:app --reload --port 8000
 
 # You should see:
 # ✅ Database tables created successfully
 # ✅ Core services initialized successfully
+# ✅ Marimo dashboards mounted at root path
 # ✅ Application startup complete
+
+# Access:
+# - Dashboards: http://localhost:8000
+# - API Docs: http://localhost:8000/docs
+# - API Health: http://localhost:8000/health
 ```
 
-**Terminal 2 - Marimo Dashboards:**
+**Development Mode (Separate Servers - Optional):**
 ```bash
-uv run marimo run notebooks/index.py --port 2718
+# Terminal 1 - FastAPI Backend Only
+uv run uvicorn app.main:app --reload --port 8000
 
+# Terminal 2 - Marimo Dashboards Standalone
+uv run marimo run notebooks/index.py --port 2718
 # Access at: http://localhost:2718
 ```
 
